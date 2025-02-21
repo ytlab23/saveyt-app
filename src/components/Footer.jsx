@@ -5,37 +5,40 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-gray-100 bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="space-y-6">
-            <Link to="/" className="flex items-center">
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-2xl font-bold text-transparent">
+    <footer className="mt-24 border-t border-gray-200 bg-white/80 backdrop-blur-sm">
+      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
+          <div className="space-y-8">
+            <Link to="/" className="group flex items-center">
+              <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-3xl font-bold text-transparent">
                 SaveYT
               </span>
             </Link>
-            <p className="max-w-md text-gray-500">
+            <p className="max-w-md text-lg leading-relaxed text-gray-600">
               The fastest and most reliable YouTube to MP3 converter.
               High-quality audio conversion at your fingertips.
             </p>
-            <div className="flex space-x-4">
-              <Link to="/contact">
+            <div className="flex space-x-5">
+              <Link
+                to="/contact"
+                className="rounded-full bg-gray-100 p-3 text-gray-700 transition-colors hover:bg-purple-100 hover:text-purple-600"
+              >
                 <Mail className="h-5 w-5" />
               </Link>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 md:col-span-2">
+          <div className="grid grid-cols-2 gap-12 md:col-span-2">
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-purple-600">
                 Legal
               </h3>
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-6 space-y-4">
                 {["Terms", "Privacy", "Copyright"].map((item) => (
                   <li key={item}>
                     <Link
                       to={`/${item.toLowerCase()}`}
-                      className="text-base text-gray-500 transition-colors hover:text-indigo-600"
+                      className="text-base font-medium text-gray-600 transition-colors hover:text-purple-600"
                     >
                       {item}
                     </Link>
@@ -44,14 +47,14 @@ export default function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-purple-600">
                 Support
               </h3>
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-6 space-y-4">
                 <li>
                   <Link
                     to="/contact"
-                    className="text-base text-gray-500 transition-colors hover:text-indigo-600"
+                    className="text-base font-medium text-gray-600 transition-colors hover:text-purple-600"
                   >
                     Contact
                   </Link>
@@ -61,8 +64,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-gray-100 pt-8">
-          <p className="text-center text-gray-400">
+        <div className="mt-16 border-t border-gray-200 pt-8">
+          <p className="text-center text-sm text-gray-500">
             &copy; {currentYear} SaveYT. All rights reserved.
           </p>
         </div>

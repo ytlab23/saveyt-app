@@ -1,3 +1,4 @@
+// Terms.jsx
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { motion } from "framer-motion";
@@ -9,20 +10,20 @@ export default function Terms() {
     <div className="flex min-h-screen flex-col">
       <BackgroundGradient />
       <Header />
-      <main className="flex-1 pb-12 pt-24">
+      <main className="flex-1 pb-16 pt-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mx-auto max-w-4xl px-4"
+          className="mx-auto max-w-4xl px-6"
         >
-          <div className="mb-12 text-center">
+          <div className="mb-16 text-center">
             <motion.h1
               initial={{ y: -20 }}
               animate={{ y: 0 }}
-              className="mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent"
+              className="mb-6 bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-5xl font-bold text-transparent" // Larger text and updated gradient
             >
-              Terms and Conditions
+              Terms of Service
             </motion.h1>
           </div>
 
@@ -30,65 +31,51 @@ export default function Terms() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="space-y-8 rounded-2xl bg-white/80 p-8 shadow-xl backdrop-blur-sm"
+            className="space-y-10 rounded-3xl border border-gray-100 bg-white/90 p-12 shadow-2xl backdrop-blur-sm" // Increased spacing, more rounded container, padding, shadow and border, softened white bg
           >
-            <div className="flex items-start gap-4">
-              <div className="rounded-xl bg-indigo-100 p-3">
-                <Shield className="h-6 w-6 text-indigo-600" />
+            <div className="flex items-start gap-6">
+              <div className="rounded-xl bg-pink-100 p-4">
+                <Book className="h-7 w-7 text-pink-600" />
               </div>
               <div>
-                <h2 className="mb-3 text-xl font-semibold text-gray-900">
+                <h2 className="mb-4 text-2xl font-semibold text-gray-900">
                   Acceptance of Terms
                 </h2>
-                <p className="leading-relaxed text-gray-600">
-                  By accessing and using SaveYT, you accept and agree to be
-                  bound by the terms and provision of this agreement.
+                <p className="text-lg leading-relaxed text-gray-700">
+                  By accessing and using SaveYT, you agree to be bound by these
+                  Terms of Service and all applicable laws and regulations.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="rounded-xl bg-purple-100 p-3">
-                <Book className="h-6 w-6 text-purple-600" />
+            <div className="flex items-start gap-6">
+              <div className="rounded-xl bg-purple-100 p-4">
+                <Shield className="h-7 w-7 text-purple-600" />
               </div>
               <div>
-                <h2 className="mb-3 text-xl font-semibold text-gray-900">
+                <h2 className="mb-4 text-2xl font-semibold text-gray-900">
                   Use License
                 </h2>
-                <p className="leading-relaxed text-gray-600">
-                  This service should only be used to download content that you
-                  have the right to download. We do not encourage or support
-                  unauthorized downloading of copyrighted material.
+                <p className="text-lg leading-relaxed text-gray-700">
+                  Permission is granted to temporarily download one copy of the
+                  materials for personal, non-commercial transitory viewing
+                  only.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4">
-              <div className="rounded-xl bg-indigo-100 p-3">
-                <Clock className="h-6 w-6 text-indigo-600" />
+            <div className="flex items-start gap-6">
+              <div className="rounded-xl bg-pink-100 p-4">
+                <Clock className="h-7 w-7 text-pink-600" />
               </div>
               <div>
-                <h2 className="mb-3 text-xl font-semibold text-gray-900">
-                  Service Limitations
+                <h2 className="mb-4 text-2xl font-semibold text-gray-900">
+                  Modifications
                 </h2>
-                <div className="space-y-2 rounded-xl bg-gray-50 p-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
-                    <p className="text-gray-600">
-                      Maximum video length: 1 hour
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-purple-600" />
-                    <p className="text-gray-600">
-                      Maximum file storage time: 15 minutes
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
-                    <p className="text-gray-600">File quality: 320kbps MP3</p>
-                  </div>
-                </div>
+                <p className="text-lg leading-relaxed text-gray-700">
+                  SaveYT may revise these terms of service for its website at
+                  any time without notice.
+                </p>
               </div>
             </div>
           </motion.div>

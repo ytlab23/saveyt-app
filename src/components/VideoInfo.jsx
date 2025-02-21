@@ -1,13 +1,15 @@
-import { Download, Share2, Clock, User } from "lucide-react";
+// VideoInfo.jsx
+import { Clock, Download, User } from "lucide-react";
 import { useVideo } from "../context/VideoContext";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import { ShareMenu } from "./ShareMenu";
 
-const BASE_URL = "http://localhost:3150";
+const BASE_URL = "https://freetoolserver.org";
 
 export default function VideoInfo() {
-  const { videoInfo } = useVideo();
+  const { videoInfo, currentVideoUrl } = useVideo();
 
   const handleDownload = async () => {
     try {
@@ -28,13 +30,21 @@ export default function VideoInfo() {
       toast.success("Download started!", {
         icon: "🎵",
         style: {
-          borderRadius: "10px",
-          background: "#333",
+          borderRadius: "12px",
+          background: "#8B5CF6",
           color: "#fff",
+          fontWeight: "500",
         },
       });
     } catch (error) {
-      toast.error("Failed to download file");
+      toast.error("Download failed", {
+        style: {
+          borderRadius: "12px",
+          background: "#EF4444",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      });
       console.error(error);
     }
   };
@@ -45,53 +55,56 @@ export default function VideoInfo() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto mt-8 w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl transition-shadow duration-300 hover:shadow-2xl"
+      className="mx-auto mt-8 w-full max-w-4xl rounded-2xl bg-white/80 p-8 shadow-2xl backdrop-blur-sm"
     >
-      <div className="flex flex-col gap-6 md:flex-row">
-        <motion.div whileHover={{ scale: 1.02 }} className="group relative">
+      <div className="flex flex-col gap-8 md:flex-row">
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="relative aspect-video w-full overflow-hidden rounded-xl md:w-[400px]"
+        >
           <img
             src={videoInfo.thumbnail_url}
             alt={videoInfo.title}
-            className="h-48 w-full rounded-xl object-cover shadow-md md:w-48"
+            className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 rounded-xl bg-black bg-opacity-0 transition-all duration-300 group-hover:bg-opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         </motion.div>
 
-        <div className="flex-1 space-y-4">
-          <h2 className="line-clamp-2 text-2xl font-bold text-gray-900">
-            {videoInfo.title}
-          </h2>
+        <div className="flex flex-1 flex-col justify-between">
+          <div className="space-y-4">
+            <h2 className="text-3xl font-bold leading-tight text-gray-900">
+              {videoInfo.title}
+            </h2>
 
-          <div className="flex flex-wrap gap-4 text-gray-600">
-            <div className="flex items-center">
-              <User className="mr-2 h-4 w-4" />
-              <span>{videoInfo.author}</span>
-            </div>
-            <div className="flex items-center">
-              <Clock className="mr-2 h-4 w-4" />
-              <span>{videoInfo.duration}</span>
+            <div className="flex flex-wrap items-center gap-4 text-gray-700">
+              <div className="flex items-center rounded-full bg-purple-100 px-4 py-1">
+                <User className="mr-2 h-4 w-4 text-purple-600" />
+                <span className="font-medium text-purple-900">
+                  {videoInfo.author}
+                </span>
+              </div>
+
+              <div className="flex items-center rounded-full bg-pink-100 px-4 py-1">
+                <Clock className="mr-2 h-4 w-4 text-pink-600" />
+                <span className="font-medium text-pink-900">
+                  {videoInfo.duration}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 pt-4">
+          <div className="mt-8 flex flex-wrap gap-4">
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleDownload}
-              className="inline-flex items-center rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-white shadow-lg transition-all duration-300 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="group inline-flex items-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 font-semibold text-white shadow-lg transition-all hover:shadow-xl"
             >
-              <Download className="mr-2 h-5 w-5" />
+              <Download className="mr-2 h-5 w-5 transition-transform group-hover:-translate-y-1" />
               Download MP3
             </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center rounded-xl bg-gray-100 px-6 py-3 text-gray-700 transition-all duration-300 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-            >
-              <Share2 className="mr-2 h-5 w-5" />
-              Share
-            </motion.button>
+            <ShareMenu videoUrl={currentVideoUrl} />
           </div>
         </div>
       </div>

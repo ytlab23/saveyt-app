@@ -6,9 +6,17 @@ const VideoContext = createContext();
 
 export const VideoProvider = ({ children }) => {
   const [videoInfo, setVideoInfo] = useState(null);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState(null);
+
+  const setVideoData = (info, url) => {
+    setVideoInfo(info);
+    setCurrentVideoUrl(url);
+  };
 
   return (
-    <VideoContext.Provider value={{ videoInfo, setVideoInfo }}>
+    <VideoContext.Provider
+      value={{ videoInfo, setVideoInfo: setVideoData, currentVideoUrl }}
+    >
       {children}
     </VideoContext.Provider>
   );

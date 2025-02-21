@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { useVideo } from "../context/VideoContext";
 
-const BASE_URL = "https://freetoolserver.org";
+const BASE_URL = "http://localhost:3150";
 
 export default function UrlInput() {
   const [url, setUrl] = useState("");
@@ -33,8 +33,8 @@ export default function UrlInput() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4">
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4">
+    <div className="mx-auto w-full max-w-3xl px-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:flex-row">
         <input
           type="text"
           value={url}
@@ -46,13 +46,13 @@ export default function UrlInput() {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-lg border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
         >
           {loading ? (
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
             <>
-              <Search className="w-5 h-5 mr-2" />
+              <Search className="mr-2 h-5 w-5" />
               Convert
             </>
           )}

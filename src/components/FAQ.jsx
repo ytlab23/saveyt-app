@@ -26,8 +26,8 @@ const faqs = [
 
 export default function FAQ() {
   return (
-    <div className="w-full max-w-3xl mx-auto px-4 py-12">
-      <h2 className="text-2xl font-bold text-gray-900 mb-8">
+    <div className="mx-auto w-full max-w-3xl px-4 py-12">
+      <h2 className="mb-8 text-center text-2xl font-bold text-gray-900">
         Frequently Asked Questions
       </h2>
       <div className="space-y-4">
@@ -51,7 +51,7 @@ export default function FAQ() {
                   leaveFrom="transform scale-100 opacity-100"
                   leaveTo="transform scale-95 opacity-0"
                 >
-                  <Disclosure.Panel className="px-4 pt-4 pb-2 text-sm text-gray-500">
+                  <Disclosure.Panel className="rounded-lg bg-gray-50 px-4 pb-2 pt-4 text-sm text-gray-500">
                     {faq.answer}
                   </Disclosure.Panel>
                 </Transition>

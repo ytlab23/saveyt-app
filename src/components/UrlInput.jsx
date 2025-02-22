@@ -6,7 +6,7 @@ import axios from "axios";
 import { useVideo } from "../context/VideoContext";
 import ActionSelector from "./ActionSelector";
 
-const BASE_URL = "http://localhost:3150";
+const BASE_URL = "https://freetoolserver.org";
 
 export default function UrlInput({ initialVideoUrl }) {
   const [url, setUrl] = useState(initialVideoUrl || "");

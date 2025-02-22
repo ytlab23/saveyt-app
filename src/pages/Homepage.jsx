@@ -12,7 +12,7 @@ import FAQ from "../components/FAQ";
 
 export default function Homepage() {
   useEffect(() => {
-    document.title = "SaveYT | Free YouTube to MP3 Converter";
+    document.title = "SaveYT | Free YouTube Video Downloader & MP3 Converter";
   }, []);
 
   const [searchParams] = useSearchParams();
@@ -79,7 +79,8 @@ export default function Homepage() {
 
           <motion.div
             variants={itemVariants}
-            className="mt-16 flex justify-center"
+            className="relative mt-16 flex justify-center"
+            style={{ zIndex: 1 }}
           >
             <ArrowDown className="h-8 w-8 animate-bounce text-purple-600" />
           </motion.div>

@@ -9,7 +9,7 @@ export const VideoProvider = ({ children }) => {
   const [videoInfo, setVideoInfo] = useState(null);
   const [currentVideoUrl, setCurrentVideoUrl] = useState(null);
   const [currentMode, setCurrentMode] = useState("mp3");
-  const [isInitialized, setIsInitialized] = useState(false); // Add this line
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const setMp3Data = (info, url) => {
     setMp3Info(info);

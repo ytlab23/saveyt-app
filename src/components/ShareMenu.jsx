@@ -1,14 +1,26 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Link2, Check, Facebook, Twitter, Send } from "lucide-react";
 import toast from "react-hot-toast";
 
-export const ShareMenu = ({ videoUrl }) => {
+export const ShareMenu = ({ videoUrl, currentMode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const menuRef = useRef(null);
 
-  const shareUrl = `${window.location.origin}?video=${encodeURIComponent(videoUrl)}`;
+  const shareUrl = `${window.location.origin}?video=${encodeURIComponent(videoUrl)}&type=${currentMode}`;
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleCopy = async () => {
     try {
@@ -50,7 +62,7 @@ export const ShareMenu = ({ videoUrl }) => {
   ];
 
   return (
-    <div className="relative">
+    <div className="relative" ref={menuRef}>
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
@@ -64,10 +76,14 @@ export const ShareMenu = ({ videoUrl }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5"
+            initial={{ opacity: 0, y: 4, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed right-4 mt-2 w-[calc(100vw-2rem)] origin-top-right rounded-xl bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 sm:absolute sm:right-0 sm:w-64"
+            style={{
+              zIndex: 100,
+            }}
           >
             <div className="space-y-3">
               {shareOptions.map((option) => (
@@ -89,9 +105,7 @@ export const ShareMenu = ({ videoUrl }) => {
               ))}
               <button
                 onClick={handleCopy}
-                className={
-                  "flex w-full items-center rounded-lg p-2 transition-colors hover:bg-gray-100"
-                }
+                className="flex w-full items-center rounded-lg p-2 transition-colors hover:bg-gray-100"
               >
                 {copied ? (
                   <Check className="mr-3 h-5 w-5 rounded-md bg-green-500 p-1 text-white" />

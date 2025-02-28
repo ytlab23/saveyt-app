@@ -52,14 +52,14 @@ const faqs = [
     answer: (
       <>
         Yes, as long as the video is not copyrighted and you don&apos;t plan to
-        use its copyrighted material elsewhere. Learn more at{" "}
+        use its copyrighted material elsewhere.{" "}
         <a
           href="https://www.techadvisor.com/article/725837/is-it-legal-download-youtube-videos.html"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center font-medium text-purple-600 underline decoration-purple-200 decoration-2 transition-colors hover:text-pink-600 hover:decoration-pink-200"
         >
-          Tech Advisor&apos;s article about YouTube downloads
+          Learn more at Tech Advisor
         </a>
         .
       </>
@@ -94,7 +94,7 @@ const faqs = [
         most default music and video apps will work. If you need additional
         options, you can find media players on{" "}
         <a
-          href="https://en.softonic.com/"
+          href="https://en.softonic.com/s/video-player"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center font-medium text-purple-600 underline decoration-purple-200 decoration-2 transition-colors hover:text-pink-600 hover:decoration-pink-200"

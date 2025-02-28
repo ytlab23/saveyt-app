@@ -7,6 +7,7 @@ import { useVideo } from "../context/VideoContext";
 import ActionSelector from "./ActionSelector";
 
 const BASE_URL = "https://freetoolserver.org";
+// const VIDEO_BASE_URL = "http://localhost:3151";
 
 export default function UrlInput({ initialVideoUrl }) {
   const [url, setUrl] = useState(initialVideoUrl || "");
@@ -44,16 +45,33 @@ export default function UrlInput({ initialVideoUrl }) {
           const response = await axios.post(`${BASE_URL}/yt-convert`, {
             url: videoUrl.trim(),
           });
-          setMp3Data(response.data, videoUrl.trim());
-          clearVideoData();
 
-          toast.success("Video ready for MP3 conversion!", {
-            style: {
-              borderRadius: "10px",
-              background: "#4BB543",
-              color: "#fff",
-            },
-          });
+          // Check if duration exceeds 1 hour (3600 seconds)
+          if (response.data.duration_seconds > 3600) {
+            toast.error(
+              "Video duration exceeds 1 hour limit. Please try a shorter video.",
+              {
+                style: {
+                  borderRadius: "10px",
+                  background: "#FF4D4D",
+                  color: "#fff",
+                  duration: 5000,
+                },
+              },
+            );
+            clearMp3Data();
+          } else {
+            setMp3Data(response.data, videoUrl.trim());
+            clearVideoData();
+
+            toast.success("Video ready for MP3 conversion!", {
+              style: {
+                borderRadius: "10px",
+                background: "#4BB543",
+                color: "#fff",
+              },
+            });
+          }
         } else {
           const response = await axios.post(`${BASE_URL}/video-info`, {
             type: "url",
@@ -64,16 +82,32 @@ export default function UrlInput({ initialVideoUrl }) {
             throw new Error("Failed to get video formats");
           }
 
-          setVideoData(response.data, videoUrl.trim());
-          clearMp3Data();
+          // Check if duration exceeds 1 hour
+          if (response.data.lengthSeconds > 3600) {
+            toast.error(
+              "Video duration exceeds 1 hour limit. Please try a shorter video.",
+              {
+                style: {
+                  borderRadius: "10px",
+                  background: "#FF4D4D",
+                  color: "#fff",
+                  duration: 5000,
+                },
+              },
+            );
+            clearVideoData();
+          } else {
+            setVideoData(response.data, videoUrl.trim());
+            clearMp3Data();
 
-          toast.success("Video information retrieved!", {
-            style: {
-              borderRadius: "10px",
-              background: "#4BB543",
-              color: "#fff",
-            },
-          });
+            toast.success("Video information retrieved!", {
+              style: {
+                borderRadius: "10px",
+                background: "#4BB543",
+                color: "#fff",
+              },
+            });
+          }
         }
 
         updateUrlWithMode(videoUrl, currentProcessingMode);

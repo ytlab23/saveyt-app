@@ -71,7 +71,7 @@ function RouteBasedTitleUpdater() {
   const location = useLocation();
 
   useEffect(() => {
-    const defaultTitle = "SaveYT | Free YouTube to MP3 Converter";
+    const defaultTitle = "SaveYT | Free YouTube downloader and MP3 Converter";
     let newTitle = defaultTitle;
 
     switch (location.pathname) {

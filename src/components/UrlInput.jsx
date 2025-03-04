@@ -7,7 +7,7 @@ import { useVideo } from "../context/VideoContext";
 import ActionSelector from "./ActionSelector";
 
 const BASE_URL = "https://freetoolserver.org";
-// const VIDEO_BASE_URL = "http://localhost:3151";
+// const BASE_URL = "http://localhost:3151";
 
 export default function UrlInput({ initialVideoUrl }) {
   const [url, setUrl] = useState(initialVideoUrl || "");

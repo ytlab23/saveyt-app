@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ShareMenu } from "./ShareMenu";
 
 const BASE_URL = "https://freetoolserver.org";
-// const VIDEO_BASE_URL = "http://localhost:3151";
 
 const qualityOptions = [
   { value: "high", label: "High quality" },
@@ -86,17 +85,50 @@ export default function VideoInfo() {
 
             // Start the actual file download
             if (currentMode === "mp3") {
-              // For MP3, we need to trigger the actual download
               const fileId = response.data.result?.file_id || downloadTaskId;
-              const link = document.createElement("a");
-              link.href = `${BASE_URL}/yt-download/${fileId}`;
-              link.setAttribute("download", `${info.title}.mp3`);
-              document.body.appendChild(link);
-              link.click();
-              link.remove();
+
+              try {
+                // If we get here without error, proceed with download
+                const link = document.createElement("a");
+                link.href = `${BASE_URL}/yt-download/${fileId}`;
+                link.setAttribute("download", `${info.title || "audio"}.mp3`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                toast.success("MP3 download ready!", {
+                  icon: "🎵",
+                  style: {
+                    borderRadius: "12px",
+                    background: "#8B5CF6",
+                    color: "#fff",
+                    fontWeight: "500",
+                  },
+                });
+              } catch (error) {
+                console.error("Error initiating file download:", error);
+                toast.error("Error downloading file. Please try again.", {
+                  style: {
+                    borderRadius: "12px",
+                    background: "#EF4444",
+                    color: "#fff",
+                    fontWeight: "500",
+                  },
+                });
+              }
             } else if (response.data.download_url) {
               // For video, follow the download URL
               window.location.href = `${BASE_URL}${response.data.download_url}`;
+
+              toast.success("Video download ready!", {
+                icon: "🎥",
+                style: {
+                  borderRadius: "12px",
+                  background: "#8B5CF6",
+                  color: "#fff",
+                  fontWeight: "500",
+                },
+              });
             }
 
             // Reset download state after a short delay
@@ -106,32 +138,19 @@ export default function VideoInfo() {
               setDownloadProgress(0);
               setDownloadStatus(null);
             }, 1000);
-
-            const successMessage =
-              currentMode === "mp3"
-                ? "MP3 download ready!"
-                : "Video download ready!";
-            const icon = currentMode === "mp3" ? "🎵" : "🎥";
-
-            toast.success(successMessage, {
-              icon: icon,
-              style: {
-                borderRadius: "12px",
-                background: "#8B5CF6",
-                color: "#fff",
-                fontWeight: "500",
-              },
-            });
           }
 
           // If there was an error, stop polling and show error
-          if (response.data.status === "error") {
+          if (
+            response.data.status === "error" ||
+            response.data.status === "failed"
+          ) {
             clearInterval(intervalId);
             setPollingInterval(null);
             setDownloading(false);
 
             toast.error(
-              `Download failed: ${response.data.message || "Unknown error"}`,
+              `Download failed: ${response.data.message || response.data.error || "Unknown error"}`,
               {
                 style: {
                   borderRadius: "12px",
@@ -171,68 +190,55 @@ export default function VideoInfo() {
   }, [downloadTaskId, currentMode, info]);
 
   const handleMp3Download = async () => {
-    if (!info?.file_id) {
-      toast.error("File ID not found");
+    if (!info) {
+      toast.error("Video information not found");
       return;
     }
 
     setDownloading(true);
 
     try {
-      // Check if the file_id is a task_id from a conversion in progress
-      if (info.task_id && info.status === "processing") {
-        // If conversion is still processing, just start polling for status
-        setDownloadTaskId(info.task_id);
+      // If we already have a file_id or task_id from a previous conversion
+      if (info.file_id || info.task_id) {
+        const idToUse = info.file_id || info.task_id;
 
-        toast.success(
-          "Download queued! Waiting for conversion to complete...",
-          {
-            duration: 3000,
-            style: {
-              borderRadius: "12px",
-              background: "#8B5CF6",
-              color: "#fff",
-              fontWeight: "500",
-            },
-          },
-        );
-      } else {
-        // Try direct download first
         try {
+          // First check if the file is already available for direct download
           const checkResponse = await axios.get(
-            `${BASE_URL}/yt-download/${info.file_id}`,
-            { responseType: "blob" },
-          );
-
-          // If we got here, the file is ready for download
-          const url = window.URL.createObjectURL(
-            new Blob([checkResponse.data]),
-          );
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", `${info.title}.mp3`);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
-
-          setDownloading(false);
-
-          toast.success("MP3 download started!", {
-            icon: "🎵",
-            style: {
-              borderRadius: "12px",
-              background: "#8B5CF6",
-              color: "#fff",
-              fontWeight: "500",
+            `${BASE_URL}/yt-download/${idToUse}`,
+            {
+              validateStatus: (status) => status < 500,
+              responseType: "blob",
             },
-          });
-        } catch (error) {
-          // If we get a 202, it means conversion is still in progress
-          if (error.response && error.response.status === 202) {
-            setDownloadTaskId(info.file_id);
-            setDownloadStatus(error.response.data.status || "processing");
-            setDownloadProgress(error.response.data.progress || 0);
+          );
+
+          // If direct download is available (200 OK)
+          if (checkResponse.status === 200) {
+            const link = document.createElement("a");
+            link.href = `${BASE_URL}/yt-download/${idToUse}`;
+            link.setAttribute("download", `${info.title || "audio"}.mp3`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setDownloading(false);
+
+            toast.success("MP3 download started!", {
+              icon: "🎵",
+              style: {
+                borderRadius: "12px",
+                background: "#8B5CF6",
+                color: "#fff",
+                fontWeight: "500",
+              },
+            });
+            return;
+          }
+
+          // If we get a 202 or other status, it means conversion is in progress or needed
+          if (checkResponse.status === 202 || checkResponse.status === 404) {
+            // Start or check conversion status
+            setDownloadTaskId(idToUse);
 
             toast.success("Conversion in progress. Please wait...", {
               duration: 3000,
@@ -243,13 +249,47 @@ export default function VideoInfo() {
                 fontWeight: "500",
               },
             });
-          } else {
-            throw error; // Re-throw to be caught by the outer catch
+            return;
           }
+        } catch (error) {
+          // If we can't access the file, start a new conversion
+          console.log("Error checking file:", error);
+          // Continue to start a new conversion below
         }
       }
+
+      // Start a new conversion if we don't have a file_id or if previous attempts failed
+      const videoId = info.videoId || info.video_id;
+      if (!videoId) {
+        throw new Error("No video ID found");
+      }
+
+      // Start new conversion
+      const response = await axios.post(`${BASE_URL}/convert-to-mp3`, {
+        video_url:
+          currentVideoUrl || `https://www.youtube.com/watch?v=${videoId}`,
+        video_id: videoId,
+      });
+
+      if (response.data.task_id) {
+        setDownloadTaskId(response.data.task_id);
+
+        toast.success("Conversion started. Please wait...", {
+          duration: 3000,
+          style: {
+            borderRadius: "12px",
+            background: "#8B5CF6",
+            color: "#fff",
+            fontWeight: "500",
+          },
+        });
+      } else {
+        throw new Error("No task ID returned from conversion request");
+      }
     } catch (error) {
+      console.error("MP3 download error:", error);
       setDownloading(false);
+
       toast.error("Download failed. Please try again.", {
         style: {
           borderRadius: "12px",
@@ -258,7 +298,6 @@ export default function VideoInfo() {
           fontWeight: "500",
         },
       });
-      console.error("MP3 download error:", error);
     }
   };
 
@@ -277,21 +316,33 @@ export default function VideoInfo() {
         `${BASE_URL}/start-download/${info.videoId}/${quality}`,
       );
 
-      setDownloadTaskId(response.data.task_id);
+      if (response.data.task_id) {
+        setDownloadTaskId(response.data.task_id);
 
-      toast.success("Download started! Please wait...", {
-        duration: 3000,
+        toast.success("Download started! Please wait...", {
+          duration: 3000,
+          style: {
+            borderRadius: "12px",
+            background: "#8B5CF6",
+            color: "#fff",
+            fontWeight: "500",
+          },
+        });
+      } else {
+        throw new Error("No task ID returned from download request");
+      }
+    } catch (error) {
+      console.error("Video download error:", error);
+      setDownloading(false);
+
+      toast.error("Failed to start download. Please try again.", {
         style: {
           borderRadius: "12px",
-          background: "#8B5CF6",
+          background: "#EF4444",
           color: "#fff",
           fontWeight: "500",
         },
       });
-    } catch (error) {
-      setDownloading(false);
-      toast.error("Failed to start download. Please try again.");
-      console.error(error);
     }
   };
 
@@ -308,6 +359,7 @@ export default function VideoInfo() {
               `${currentMode === "mp3" ? "Converting" : "Downloading"}: ${downloadProgress > 0 ? `${downloadProgress.toFixed(1)}%` : "Starting..."}`}
             {downloadStatus === "completed" && "Download complete!"}
             {downloadStatus === "error" && "Download failed"}
+            {downloadStatus === "failed" && "Download failed"}
           </span>
         </div>
         <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-200">

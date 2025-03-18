@@ -83,12 +83,12 @@ export default function Footer() {
           <p className="text-center text-sm text-gray-500">
             Built by{" "}
             <a
-              href="https://t.me/Kvnq_poza"
+              href="https://github.com/Kvnq-Poza"
               target="_blank"
               rel="noopener noreferrer"
               className="text-purple-600 underline decoration-purple-200 decoration-2 transition-colors hover:text-pink-600 hover:decoration-pink-200"
             >
-              Kvn
+              Kvnq Poza
             </a>{" "}
             for SaveYT.co
           </p>

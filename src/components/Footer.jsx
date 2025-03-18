@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Globe, Mail } from "lucide-react";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -19,6 +19,18 @@ export default function Footer() {
               High-quality audio conversion at your fingertips.
             </p>
             <div className="flex space-x-5">
+              {/* Main Domain Button */}
+              <a
+                href="http://saveyt.co"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 rounded-full bg-gray-100 p-3 text-gray-700 transition-colors hover:bg-purple-100 hover:text-purple-600"
+              >
+                <Globe className="h-5 w-5" />
+                <span>Main Domain</span>
+              </a>
+
+              {/* Email Icon */}
               <Link
                 to="/contact"
                 className="rounded-full bg-gray-100 p-3 text-gray-700 transition-colors hover:bg-purple-100 hover:text-purple-600"
@@ -78,7 +90,7 @@ export default function Footer() {
             >
               Kvnq Poza
             </a>{" "}
-            for Mp3Tube.io
+            for SaveYT.co
           </p>
         </div>
       </div>

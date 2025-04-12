@@ -1,0 +1,9 @@
+{
+  "name": "SaveYT",
+  "short_name": "SaveYT",
+  "description": "SaveYT | Free YouTube downloader and MP3 Converter",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#db2777",
+  "theme_color": "#db2777"
+}

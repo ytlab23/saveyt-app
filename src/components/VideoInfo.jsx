@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Clock, Download, User, Music, ChevronDown } from "lucide-react";
+import {
+  Clock,
+  Download,
+  User,
+  Music,
+  ChevronDown,
+  Calendar,
+  Eye,
+  ThumbsUp,
+} from "lucide-react";
 import { useVideo } from "../context/VideoContext";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -490,8 +499,27 @@ export default function VideoInfo() {
 
               {videoInfo.viewCount && (
                 <div className="flex items-center rounded-full bg-blue-100 px-3 py-1 sm:px-4">
+                  <Eye className="mr-1 h-4 w-4 text-green-600 sm:mr-2" />
+                  <span className="text-sm font-medium text-green-900 sm:text-base">
+                    {formatNumber(videoInfo.viewCount)}
+                  </span>
+                </div>
+              )}
+
+              {videoInfo?.publishedAt && (
+                <div className="flex items-center rounded-full bg-blue-100 px-3 py-1 sm:px-4">
+                  <Calendar className="mr-1 h-4 w-4 text-blue-600 sm:mr-2" />
                   <span className="text-sm font-medium text-blue-900 sm:text-base">
-                    {formatViews(videoInfo.viewCount)}
+                    {formatPublishDate(videoInfo.publishedAt)}
+                  </span>
+                </div>
+              )}
+
+              {videoInfo?.likeCount && (
+                <div className="flex items-center rounded-full bg-red-100 px-3 py-1 sm:px-4">
+                  <ThumbsUp className="mr-1 h-4 w-4 text-red-600 sm:mr-2" />
+                  <span className="text-sm font-medium text-red-900 sm:text-base">
+                    {formatNumber(videoInfo.likeCount)}
                   </span>
                 </div>
               )}
@@ -526,7 +554,12 @@ export default function VideoInfo() {
                       ) : (
                         <>
                           <Music className="mr-2 h-5 w-5 transition-transform group-hover:-translate-y-1" />
-                          Download MP3
+                          Download MP3 &nbsp;
+                          {mp3Format && (
+                            <span className="text-muted-foreground text-sm">
+                              – {formatFileSize(mp3Format.size)}
+                            </span>
+                          )}
                         </>
                       )}
                     </motion.button>
@@ -563,9 +596,7 @@ export default function VideoInfo() {
                             exit={{ opacity: 0, y: 4, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
                             className="fixed right-4 mt-2 w-[calc(100vw-2rem)] origin-top-right rounded-xl bg-white p-4 shadow-2xl ring-1 ring-black ring-opacity-5 sm:absolute sm:right-0 sm:w-48"
-                            style={{
-                              zIndex: 100,
-                            }}
+                            style={{ zIndex: 100 }}
                           >
                             {qualityOptions.map((option) => (
                               <button
@@ -573,9 +604,12 @@ export default function VideoInfo() {
                                 onClick={() =>
                                   handleVideoDownload(option.value)
                                 }
-                                className="flex w-full items-center rounded-lg p-2 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                                className="flex w-full items-center justify-between rounded-lg p-2 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
                               >
-                                {option.label}
+                                <span>{option.label}</span>
+                                <span className="text-muted-foreground text-xs">
+                                  {formatFileSize(option.size)}
+                                </span>
                               </button>
                             ))}
                           </motion.div>

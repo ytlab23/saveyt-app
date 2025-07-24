@@ -81,44 +81,52 @@ export default function VideoInfo() {
   const [pollingInterval, setPollingInterval] = useState(null);
   const qualityMenuRef = useRef(null);
 
-  // Filter formats based on current mode
-  const availableFormats = useMemo(() => {
-    if (!videoInfo?.formats) return [];
+  // Utility to filter formats based on mode
+  const filterFormatsByMode = (formats, mode) => {
+    if (!formats) return [];
 
-    if (currentMode === "mp3") {
-      // Return audio formats or indicate MP3 availability
-      return videoInfo.formats.filter(
-        (format) => format.type === "mp3" || format.audioOnly === true,
-      );
-    } else {
-      // Return video formats
-      return videoInfo.formats.filter(
-        (format) => format.type === "mp4" && !format.audioOnly,
-      );
-    }
-  }, [videoInfo, currentMode]);
+    return formats.filter((format) => {
+      if (mode === "mp3") {
+        return format.type === "mp3" || format.audioOnly === true;
+      } else {
+        return format.type === "mp4" && !format.audioOnly;
+      }
+    });
+  };
 
-  // Get quality options for video downloads
-  const qualityOptions = useMemo(() => {
-    if (currentMode === "mp3") return [];
-
-    const qualities = availableFormats.map((format) => ({
+  // Utility to extract and clean quality options
+  const extractQualityOptions = (formats) => {
+    const options = formats.map((format) => ({
       value: format.quality,
-      label: `${format.quality}p`,
+      label: `${format.formatNote}`,
       itag: format.itag,
       size: format.size,
     }));
 
-    // Remove duplicates and sort by quality
-    const uniqueQualities = qualities
+    // Remove duplicates and sort
+    return options
       .filter(
-        (quality, index, arr) =>
-          arr.findIndex((q) => q.value === quality.value) === index,
+        (opt, index, arr) =>
+          arr.findIndex((q) => q.value === opt.value) === index,
       )
       .sort((a, b) => b.value - a.value);
+  };
 
-    return uniqueQualities;
+  // Memoized filtered formats
+  const availableFormats = useMemo(() => {
+    return filterFormatsByMode(videoInfo?.formats, currentMode);
+  }, [videoInfo, currentMode]);
+
+  // Memoized quality options
+  const qualityOptions = useMemo(() => {
+    return currentMode === "mp3" ? [] : extractQualityOptions(availableFormats);
   }, [availableFormats, currentMode]);
+
+  const mp3Format = useMemo(() => {
+    return filterFormatsByMode(videoInfo?.formats, "mp3")?.find(
+      (f) => f.type === "mp3",
+    );
+  }, [videoInfo]);
 
   const isVideoTooLong = useMemo(() => {
     return videoInfo?.duration > 3600;

@@ -17,8 +17,10 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
-    "react-router-dom": "^6.22.0"
+    "react-router-dom": "^6.22.0",
+    "socket.io-client": "^4.7.2"
   },
+  "installCommand": "npm install socket.io-client",
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
     "@types/react": "^18.2.55",

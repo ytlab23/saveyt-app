@@ -5,35 +5,63 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShareMenu } from "./ShareMenu";
+import webSocketManager from "../websocket/WebSocketManager";
 
-const BASE_URL = "https://freetoolserver.org";
-
-const qualityOptions = [
-  { value: "high", label: "High quality" },
-  { value: "medium", label: "Medium quality" },
-  { value: "low", label: "Low quality" },
-];
+const BASE_URL = "https://freelikes.org";
 
 export default function VideoInfo() {
-  const { mp3Info, videoInfo, currentVideoUrl, currentMode } = useVideo();
+  const { videoInfo, currentVideoUrl, currentMode } = useVideo();
   const [showQualityMenu, setShowQualityMenu] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadStatus, setDownloadStatus] = useState(null);
-  const [downloadTaskId, setDownloadTaskId] = useState(null);
+  const [downloadMessage, setDownloadMessage] = useState("");
+  const [currentJobId, setCurrentJobId] = useState(null);
   const [pollingInterval, setPollingInterval] = useState(null);
   const qualityMenuRef = useRef(null);
 
-  // Get the appropriate info based on current mode
-  const info = currentMode === "mp3" ? mp3Info : videoInfo;
+  // Filter formats based on current mode
+  const availableFormats = useMemo(() => {
+    if (!videoInfo?.formats) return [];
+
+    if (currentMode === "mp3") {
+      // Return audio formats or indicate MP3 availability
+      return videoInfo.formats.filter(
+        (format) => format.type === "mp3" || format.audioOnly === true,
+      );
+    } else {
+      // Return video formats
+      return videoInfo.formats.filter(
+        (format) => format.type === "mp4" && !format.audioOnly,
+      );
+    }
+  }, [videoInfo, currentMode]);
+
+  // Get quality options for video downloads
+  const qualityOptions = useMemo(() => {
+    if (currentMode === "mp3") return [];
+
+    const qualities = availableFormats.map((format) => ({
+      value: format.quality,
+      label: `${format.quality}p`,
+      itag: format.itag,
+      size: format.size,
+    }));
+
+    // Remove duplicates and sort by quality
+    const uniqueQualities = qualities
+      .filter(
+        (quality, index, arr) =>
+          arr.findIndex((q) => q.value === quality.value) === index,
+      )
+      .sort((a, b) => b.value - a.value);
+
+    return uniqueQualities;
+  }, [availableFormats, currentMode]);
 
   const isVideoTooLong = useMemo(() => {
-    if (currentMode === "mp3") {
-      return mp3Info?.duration_seconds > 3600;
-    } else {
-      return videoInfo?.lengthSeconds > 3600;
-    }
-  }, [currentMode, mp3Info, videoInfo]);
+    return videoInfo?.duration > 3600;
+  }, [videoInfo]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -49,230 +77,204 @@ export default function VideoInfo() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Clean up polling interval on unmount
+  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (pollingInterval) {
         clearInterval(pollingInterval);
       }
+      if (currentJobId) {
+        webSocketManager.unsubscribeFromJob(currentJobId);
+      }
     };
-  }, [pollingInterval]);
+  }, [pollingInterval, currentJobId]);
 
-  // Status polling effect - works for both MP3 and video downloads
-  useEffect(() => {
-    if (downloadTaskId) {
-      // Determine which API endpoint to use based on currentMode
-      const statusEndpoint =
-        currentMode === "mp3"
-          ? `${BASE_URL}/conversion-status/${downloadTaskId}`
-          : `${BASE_URL}/download-status/${downloadTaskId}`;
+  // WebSocket and polling management
+  const startJobMonitoring = async (jobId) => {
+    console.log("Starting job monitoring for:", jobId);
 
-      // Start polling for status updates
-      const intervalId = setInterval(async () => {
-        try {
-          const response = await axios.get(statusEndpoint);
+    // Try WebSocket first
+    const wsConnected = await webSocketManager.subscribeToJob(
+      jobId,
+      (jobData) => {
+        console.log("WebSocket job update:", jobData);
+        handleJobUpdate(jobData);
+      },
+    );
 
-          setDownloadStatus(response.data.status);
-          setDownloadProgress(response.data.progress || 0);
-
-          // If download is completed, stop polling and initiate download
-          if (
-            response.data.status === "completed" ||
-            (currentMode === "mp3" && response.data.result?.file_id)
-          ) {
-            clearInterval(intervalId);
-            setPollingInterval(null);
-
-            // Start the actual file download
-            if (currentMode === "mp3") {
-              const fileId = response.data.result?.file_id || downloadTaskId;
-
-              try {
-                // If we get here without error, proceed with download
-                const link = document.createElement("a");
-                link.href = `${BASE_URL}/yt-download/${fileId}`;
-                link.setAttribute("download", `${info.title || "audio"}.mp3`);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-
-                toast.success("MP3 download ready!", {
-                  icon: "🎵",
-                  style: {
-                    borderRadius: "12px",
-                    background: "#8B5CF6",
-                    color: "#fff",
-                    fontWeight: "500",
-                  },
-                });
-              } catch (error) {
-                console.error("Error initiating file download:", error);
-                toast.error("Error downloading file. Please try again.", {
-                  style: {
-                    borderRadius: "12px",
-                    background: "#EF4444",
-                    color: "#fff",
-                    fontWeight: "500",
-                  },
-                });
-              }
-            } else if (response.data.download_url) {
-              // For video, follow the download URL
-              window.location.href = `${BASE_URL}${response.data.download_url}`;
-
-              toast.success("Video download ready!", {
-                icon: "🎥",
-                style: {
-                  borderRadius: "12px",
-                  background: "#8B5CF6",
-                  color: "#fff",
-                  fontWeight: "500",
-                },
-              });
-            }
-
-            // Reset download state after a short delay
-            setTimeout(() => {
-              setDownloading(false);
-              setDownloadTaskId(null);
-              setDownloadProgress(0);
-              setDownloadStatus(null);
-            }, 1000);
-          }
-
-          // If there was an error, stop polling and show error
-          if (
-            response.data.status === "error" ||
-            response.data.status === "failed"
-          ) {
-            clearInterval(intervalId);
-            setPollingInterval(null);
-            setDownloading(false);
-
-            toast.error(
-              `Download failed: ${response.data.message || response.data.error || "Unknown error"}`,
-              {
-                style: {
-                  borderRadius: "12px",
-                  background: "#EF4444",
-                  color: "#fff",
-                  fontWeight: "500",
-                },
-              },
-            );
-          }
-        } catch (error) {
-          console.error(
-            `Error checking ${currentMode} download status:`,
-            error,
-          );
-
-          // If we get consecutive errors, we might want to stop polling
-          if (error.response && error.response.status === 404) {
-            clearInterval(intervalId);
-            setPollingInterval(null);
-            setDownloading(false);
-
-            toast.error("Download task not found", {
-              style: {
-                borderRadius: "12px",
-                background: "#EF4444",
-                color: "#fff",
-                fontWeight: "500",
-              },
-            });
-          }
-        }
-      }, 2000); // Check every 2 seconds
-
-      setPollingInterval(intervalId);
+    if (!wsConnected) {
+      console.log("WebSocket failed, starting polling");
+      startPolling(jobId);
     }
-  }, [downloadTaskId, currentMode, info]);
+  };
+
+  const startPolling = (jobId) => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+    }
+
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/yt-api/status/${jobId}`);
+        handleJobUpdate(response.data);
+      } catch (error) {
+        console.error("Polling error:", error);
+        if (error.response?.status === 404) {
+          clearInterval(intervalId);
+          setPollingInterval(null);
+          handleJobError("Job not found");
+        }
+      }
+    }, 2000);
+
+    setPollingInterval(intervalId);
+  };
+
+  const handleJobUpdate = (jobData) => {
+    console.log("Handling job update:", jobData);
+
+    setDownloadStatus(jobData.status);
+    setDownloadMessage(jobData.message || "Processing...");
+
+    // Parse progress - it might come as string with % or as number
+    let progress = 0;
+    if (typeof jobData.progress === "string") {
+      progress = parseFloat(jobData.progress.replace("%", "")) || 0;
+    } else if (typeof jobData.progress === "number") {
+      progress = jobData.progress;
+    }
+    setDownloadProgress(progress);
+
+    if (jobData.status === "completed") {
+      handleJobComplete(jobData);
+    } else if (jobData.status === "error") {
+      handleJobError(jobData.error || "Processing failed");
+    }
+  };
+
+  const handleJobComplete = (jobData) => {
+    console.log("Job completed:", jobData);
+
+    // Stop monitoring
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    if (currentJobId) {
+      webSocketManager.unsubscribeFromJob(currentJobId);
+    }
+
+    // Start download
+    const downloadUrl = jobData.downloadUrl.startsWith("http")
+      ? jobData.downloadUrl
+      : `${BASE_URL}${jobData.downloadUrl}`;
+
+    // Auto-download with a small delay
+    setTimeout(() => {
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = jobData.filename || "download";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }, 500);
+
+    const fileType = currentMode === "mp3" ? "Audio" : "Video";
+    toast.success(
+      `${fileType} download completed! Download will start automatically...`,
+      {
+        icon: currentMode === "mp3" ? "🎵" : "🎥",
+        style: {
+          borderRadius: "12px",
+          background: "#8B5CF6",
+          color: "#fff",
+          fontWeight: "500",
+        },
+      },
+    );
+
+    // Reset state
+    setTimeout(() => {
+      setDownloading(false);
+      setCurrentJobId(null);
+      setDownloadProgress(0);
+      setDownloadStatus(null);
+      setDownloadMessage("");
+    }, 1000);
+  };
+
+  const handleJobError = (error) => {
+    console.error("Job error:", error);
+
+    // Stop monitoring
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+    if (currentJobId) {
+      webSocketManager.unsubscribeFromJob(currentJobId);
+    }
+
+    toast.error(`Download failed: ${error}`, {
+      style: {
+        borderRadius: "12px",
+        background: "#EF4444",
+        color: "#fff",
+        fontWeight: "500",
+      },
+    });
+
+    // Reset state
+    setDownloading(false);
+    setCurrentJobId(null);
+    setDownloadProgress(0);
+    setDownloadStatus(null);
+    setDownloadMessage("");
+  };
 
   const handleMp3Download = async () => {
-    if (!info) {
+    if (!videoInfo) {
       toast.error("Video information not found");
       return;
     }
 
     setDownloading(true);
+    setDownloadProgress(0);
+    setDownloadStatus("starting");
+    setDownloadMessage("Initiating MP3 conversion...");
 
     try {
-      // If we already have a file_id or task_id from a previous conversion
-      if (info.file_id || info.task_id) {
-        const idToUse = info.file_id || info.task_id;
-
-        try {
-          // First check if the file is already available for direct download
-          const checkResponse = await axios.get(
-            `${BASE_URL}/yt-download/${idToUse}`,
-            {
-              validateStatus: (status) => status < 500,
-              responseType: "blob",
-            },
-          );
-
-          // If direct download is available (200 OK)
-          if (checkResponse.status === 200) {
-            const link = document.createElement("a");
-            link.href = `${BASE_URL}/yt-download/${idToUse}`;
-            link.setAttribute("download", `${info.title || "audio"}.mp3`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-
-            setDownloading(false);
-
-            toast.success("MP3 download started!", {
-              icon: "🎵",
-              style: {
-                borderRadius: "12px",
-                background: "#8B5CF6",
-                color: "#fff",
-                fontWeight: "500",
-              },
-            });
-            return;
-          }
-
-          // If we get a 202 or other status, it means conversion is in progress or needed
-          if (checkResponse.status === 202 || checkResponse.status === 404) {
-            // Start or check conversion status
-            setDownloadTaskId(idToUse);
-
-            toast.success("Conversion in progress. Please wait...", {
-              duration: 3000,
-              style: {
-                borderRadius: "12px",
-                background: "#8B5CF6",
-                color: "#fff",
-                fontWeight: "500",
-              },
-            });
-            return;
-          }
-        } catch (error) {
-          // If we can't access the file, start a new conversion
-          console.log("Error checking file:", error);
-          // Continue to start a new conversion below
-        }
-      }
-
-      // Start a new conversion if we don't have a file_id or if previous attempts failed
-      const videoId = info.videoId || info.video_id;
-      if (!videoId) {
-        throw new Error("No video ID found");
-      }
-
-      // Start new conversion
-      const response = await axios.post(`${BASE_URL}/convert-to-mp3`, {
-        video_url:
-          currentVideoUrl || `https://www.youtube.com/watch?v=${videoId}`,
-        video_id: videoId,
+      const response = await axios.post(`${BASE_URL}/yt-api/download`, {
+        url: currentVideoUrl,
+        format: "mp3",
       });
 
-      if (response.data.task_id) {
-        setDownloadTaskId(response.data.task_id);
+      if (response.data.directDownload) {
+        // Direct download available
+        if (response.data.openInNewTab) {
+          window.open(response.data.downloadUrl, "_blank");
+        } else {
+          window.location.href = response.data.downloadUrl;
+        }
+
+        toast.success("MP3 download started!", {
+          icon: "🎵",
+          style: {
+            borderRadius: "12px",
+            background: "#8B5CF6",
+            color: "#fff",
+            fontWeight: "500",
+          },
+        });
+
+        setDownloading(false);
+      } else {
+        // Processing required
+        setCurrentJobId(response.data.jobId);
+        setDownloadStatus("queued");
+        setDownloadMessage("Queued for processing...");
+
+        await startJobMonitoring(response.data.jobId);
 
         toast.success("Conversion started. Please wait...", {
           duration: 3000,
@@ -283,41 +285,66 @@ export default function VideoInfo() {
             fontWeight: "500",
           },
         });
-      } else {
-        throw new Error("No task ID returned from conversion request");
       }
     } catch (error) {
       console.error("MP3 download error:", error);
-      setDownloading(false);
-
-      toast.error("Download failed. Please try again.", {
-        style: {
-          borderRadius: "12px",
-          background: "#EF4444",
-          color: "#fff",
-          fontWeight: "500",
-        },
-      });
+      const errorMessage =
+        error.response?.data?.error || "Download failed. Please try again.";
+      handleJobError(errorMessage);
     }
   };
 
   const handleVideoDownload = async (quality) => {
-    if (!info?.videoId) {
+    if (!videoInfo?.id) {
       toast.error("Video ID not found");
       return;
     }
 
     setDownloading(true);
+    setDownloadProgress(0);
+    setDownloadStatus("starting");
+    setDownloadMessage("Initiating video download...");
     setShowQualityMenu(false);
 
     try {
-      // Start the background download process
-      const response = await axios.get(
-        `${BASE_URL}/start-download/${info.videoId}/${quality}`,
+      // Find the format with the selected quality
+      const selectedFormat = availableFormats.find(
+        (format) => format.quality === quality,
       );
 
-      if (response.data.task_id) {
-        setDownloadTaskId(response.data.task_id);
+      const response = await axios.post(`${BASE_URL}/yt-api/download`, {
+        url: currentVideoUrl,
+        format: "mp4",
+        quality: quality,
+        itag: selectedFormat?.itag,
+      });
+
+      if (response.data.directDownload) {
+        // Direct download available
+        if (response.data.openInNewTab) {
+          window.open(response.data.downloadUrl, "_blank");
+        } else {
+          window.location.href = response.data.downloadUrl;
+        }
+
+        toast.success("Video download started!", {
+          icon: "🎥",
+          style: {
+            borderRadius: "12px",
+            background: "#8B5CF6",
+            color: "#fff",
+            fontWeight: "500",
+          },
+        });
+
+        setDownloading(false);
+      } else {
+        // Processing required
+        setCurrentJobId(response.data.jobId);
+        setDownloadStatus("queued");
+        setDownloadMessage("Queued for processing...");
+
+        await startJobMonitoring(response.data.jobId);
 
         toast.success("Download started! Please wait...", {
           duration: 3000,
@@ -328,21 +355,13 @@ export default function VideoInfo() {
             fontWeight: "500",
           },
         });
-      } else {
-        throw new Error("No task ID returned from download request");
       }
     } catch (error) {
       console.error("Video download error:", error);
-      setDownloading(false);
-
-      toast.error("Failed to start download. Please try again.", {
-        style: {
-          borderRadius: "12px",
-          background: "#EF4444",
-          color: "#fff",
-          fontWeight: "500",
-        },
-      });
+      const errorMessage =
+        error.response?.data?.error ||
+        "Failed to start download. Please try again.";
+      handleJobError(errorMessage);
     }
   };
 
@@ -351,18 +370,12 @@ export default function VideoInfo() {
     if (!downloading || !downloadStatus) return null;
 
     return (
-      <div className="mt-2 w-full">
+      <div className="mt-4 w-full">
         <div className="flex items-center justify-between text-sm text-gray-700">
-          <span>
-            {downloadStatus === "queued" && "Preparing download..."}
-            {downloadStatus === "processing" &&
-              `${currentMode === "mp3" ? "Converting" : "Downloading"}: ${downloadProgress > 0 ? `${downloadProgress.toFixed(1)}%` : "Starting..."}`}
-            {downloadStatus === "completed" && "Download complete!"}
-            {downloadStatus === "error" && "Download failed"}
-            {downloadStatus === "failed" && "Download failed"}
-          </span>
+          <span>{downloadMessage}</span>
+          <span>{downloadProgress.toFixed(1)}%</span>
         </div>
-        <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200">
           <div
             className="h-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all duration-300"
             style={{ width: `${downloadProgress}%` }}
@@ -372,7 +385,29 @@ export default function VideoInfo() {
     );
   };
 
-  if (!info) return null;
+  // Format duration helper
+  const formatDuration = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Format views helper
+  const formatViews = (viewCount) => {
+    if (viewCount >= 1000000) {
+      return `${(viewCount / 1000000).toFixed(1)}M views`;
+    } else if (viewCount >= 1000) {
+      return `${(viewCount / 1000).toFixed(1)}K views`;
+    }
+    return `${viewCount} views`;
+  };
+
+  if (!videoInfo) return null;
 
   return (
     <motion.div
@@ -386,8 +421,8 @@ export default function VideoInfo() {
           className="relative aspect-video w-full overflow-hidden rounded-xl md:w-[400px]"
         >
           <img
-            src={info.thumbnail || info.thumbnail_url}
-            alt={info.title}
+            src={videoInfo.thumbnail}
+            alt={videoInfo.title}
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -396,23 +431,31 @@ export default function VideoInfo() {
         <div className="flex flex-1 flex-col justify-between">
           <div className="space-y-3 sm:space-y-4">
             <h2 className="text-2xl font-bold leading-tight text-gray-900 sm:text-3xl">
-              {info.title}
+              {videoInfo.title}
             </h2>
 
             <div className="flex flex-wrap items-center gap-2 text-gray-700 sm:gap-4">
               <div className="flex items-center rounded-full bg-purple-100 px-3 py-1 sm:px-4">
                 <User className="mr-1 h-4 w-4 text-purple-600 sm:mr-2" />
                 <span className="text-sm font-medium text-purple-900 sm:text-base">
-                  {info.author}
+                  {videoInfo.channelTitle}
                 </span>
               </div>
 
               <div className="flex items-center rounded-full bg-pink-100 px-3 py-1 sm:px-4">
                 <Clock className="mr-1 h-4 w-4 text-pink-600 sm:mr-2" />
                 <span className="text-sm font-medium text-pink-900 sm:text-base">
-                  {info.duration}
+                  {formatDuration(videoInfo.duration)}
                 </span>
               </div>
+
+              {videoInfo.viewCount && (
+                <div className="flex items-center rounded-full bg-blue-100 px-3 py-1 sm:px-4">
+                  <span className="text-sm font-medium text-blue-900 sm:text-base">
+                    {formatViews(videoInfo.viewCount)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

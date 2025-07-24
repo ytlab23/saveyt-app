@@ -6,19 +6,16 @@ import axios from "axios";
 import { useVideo } from "../context/VideoContext";
 import ActionSelector from "./ActionSelector";
 
-const BASE_URL = "https://freetoolserver.org";
-// const BASE_URL = "http://localhost:3151";
+const BASE_URL = "https://freelikes.org";
 
 export default function UrlInput({ initialVideoUrl }) {
   const [url, setUrl] = useState(initialVideoUrl || "");
   const [loading, setLoading] = useState(false);
   const {
-    setMp3Data,
     setVideoData,
     currentMode,
     setCurrentMode,
     clearVideoData,
-    clearMp3Data,
     isInitialized,
     setIsInitialized,
   } = useVideo();
@@ -39,77 +36,44 @@ export default function UrlInput({ initialVideoUrl }) {
     async (videoUrl, mode) => {
       setLoading(true);
       try {
-        const currentProcessingMode = mode || currentMode;
+        // Single API call to get both video and audio info
+        const response = await axios.post(`${BASE_URL}/yt-api/video_info`, {
+          url: videoUrl.trim(),
+        });
 
-        if (currentProcessingMode === "mp3") {
-          const response = await axios.post(`${BASE_URL}/yt-convert`, {
-            url: videoUrl.trim(),
-          });
-
-          // Check if duration exceeds 1 hour (3600 seconds)
-          if (response.data.duration_seconds > 3600) {
-            toast.error(
-              "Video duration exceeds 1 hour limit. Please try a shorter video.",
-              {
-                style: {
-                  borderRadius: "10px",
-                  background: "#FF4D4D",
-                  color: "#fff",
-                  duration: 5000,
-                },
-              },
-            );
-            clearMp3Data();
-          } else {
-            setMp3Data(response.data, videoUrl.trim());
-            clearVideoData();
-
-            toast.success("Video ready for MP3 conversion!", {
-              style: {
-                borderRadius: "10px",
-                background: "#4BB543",
-                color: "#fff",
-              },
-            });
-          }
-        } else {
-          const response = await axios.post(`${BASE_URL}/video-info`, {
-            type: "url",
-            url: videoUrl.trim(),
-          });
-
-          if (!response.data || !response.data.formats) {
-            throw new Error("Failed to get video formats");
-          }
-
-          // Check if duration exceeds 1 hour
-          if (response.data.lengthSeconds > 3600) {
-            toast.error(
-              "Video duration exceeds 1 hour limit. Please try a shorter video.",
-              {
-                style: {
-                  borderRadius: "10px",
-                  background: "#FF4D4D",
-                  color: "#fff",
-                  duration: 5000,
-                },
-              },
-            );
-            clearVideoData();
-          } else {
-            setVideoData(response.data, videoUrl.trim());
-            clearMp3Data();
-
-            toast.success("Video information retrieved!", {
-              style: {
-                borderRadius: "10px",
-                background: "#4BB543",
-                color: "#fff",
-              },
-            });
-          }
+        if (!response.data) {
+          throw new Error("Failed to get video information");
         }
 
+        // Check if duration exceeds 1 hour (3600 seconds)
+        if (response.data.duration > 3600) {
+          toast.error(
+            "Video duration exceeds 1 hour limit. Please try a shorter video.",
+            {
+              style: {
+                borderRadius: "10px",
+                background: "#FF4D4D",
+                color: "#fff",
+                duration: 5000,
+              },
+            },
+          );
+          clearVideoData();
+          return;
+        }
+
+        // Store the complete video data (includes both video and audio formats)
+        setVideoData(response.data, videoUrl.trim());
+
+        toast.success("Video information retrieved successfully!", {
+          style: {
+            borderRadius: "10px",
+            background: "#4BB543",
+            color: "#fff",
+          },
+        });
+
+        const currentProcessingMode = mode || currentMode;
         updateUrlWithMode(videoUrl, currentProcessingMode);
       } catch (error) {
         const errorMessage =
@@ -123,11 +87,12 @@ export default function UrlInput({ initialVideoUrl }) {
           },
         });
         console.error("Processing error:", error);
+        clearVideoData();
       } finally {
         setLoading(false);
       }
     },
-    [currentMode, setMp3Data, setVideoData, clearVideoData, clearMp3Data],
+    [currentMode, setVideoData, clearVideoData],
   );
 
   useEffect(() => {
@@ -139,7 +104,7 @@ export default function UrlInput({ initialVideoUrl }) {
       const newMode = actionType === "video" ? "video" : "mp3";
       setCurrentMode(newMode);
 
-      // Pass the mode explicitly to handleSubmitWithUrl
+      // Fetch video info (this will work for both modes since we get all data)
       handleSubmitWithUrl(initialVideoUrl, newMode);
       setIsInitialized(true);
     }
@@ -177,7 +142,7 @@ export default function UrlInput({ initialVideoUrl }) {
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder={`Paste YouTube URL here for ${currentMode === "mp3" ? "MP3 conversion" : "video download"}...`}
+          placeholder="Paste YouTube URL here..."
           className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 shadow-sm focus:border-pink-500 focus:ring-pink-500"
           disabled={loading}
         />
@@ -191,7 +156,7 @@ export default function UrlInput({ initialVideoUrl }) {
           ) : (
             <>
               <Search className="mr-2 h-5 w-5" />
-              {currentMode === "mp3" ? "Convert" : "Get Video Info"}
+              Fetch Video
             </>
           )}
         </button>

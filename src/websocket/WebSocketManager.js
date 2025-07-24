@@ -61,11 +61,9 @@ class WebSocketManager {
           }
         }
 
-        console.log("Connecting WebSocket to:", connectionUrl);
         this.socket = io(connectionUrl, socketOptions);
 
         this.socket.on("connect", () => {
-          console.log("WebSocket connected:", this.socket.id);
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.connectionPromise = null;
@@ -73,7 +71,6 @@ class WebSocketManager {
         });
 
         this.socket.on("disconnect", (reason) => {
-          console.log("WebSocket disconnected:", reason);
           this.isConnected = false;
           this.connectionPromise = null;
 
@@ -84,7 +81,6 @@ class WebSocketManager {
         });
 
         this.socket.on("job-update", (jobData) => {
-          console.log("Job update received:", jobData);
           const callback = this.subscribers.get(jobData.id);
           if (callback) {
             callback(jobData);
@@ -137,7 +133,6 @@ class WebSocketManager {
     this.isConnected = false;
     this.connectionPromise = null;
     this.subscribers.clear();
-    console.log("WebSocket disconnected gracefully");
   }
 
   async subscribeToJob(jobId, callback) {
@@ -147,7 +142,6 @@ class WebSocketManager {
       if (this.isConnected && this.socket) {
         this.subscribers.set(jobId, callback);
         this.socket.emit("subscribe-job", jobId);
-        console.log("Subscribed to job:", jobId);
         return true;
       }
     } catch (error) {
@@ -160,7 +154,6 @@ class WebSocketManager {
   unsubscribeFromJob(jobId) {
     if (this.isConnected && this.socket) {
       this.socket.emit("unsubscribe-job", jobId);
-      console.log("Unsubscribed from job:", jobId);
     }
 
     this.subscribers.delete(jobId);

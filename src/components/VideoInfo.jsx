@@ -91,19 +91,15 @@ export default function VideoInfo() {
 
   // WebSocket and polling management
   const startJobMonitoring = async (jobId) => {
-    console.log("Starting job monitoring for:", jobId);
-
     // Try WebSocket first
     const wsConnected = await webSocketManager.subscribeToJob(
       jobId,
       (jobData) => {
-        console.log("WebSocket job update:", jobData);
         handleJobUpdate(jobData);
       },
     );
 
     if (!wsConnected) {
-      console.log("WebSocket failed, starting polling");
       startPolling(jobId);
     }
   };
@@ -131,8 +127,6 @@ export default function VideoInfo() {
   };
 
   const handleJobUpdate = (jobData) => {
-    console.log("Handling job update:", jobData);
-
     setDownloadStatus(jobData.status);
     setDownloadMessage(jobData.message || "Processing...");
 
@@ -153,8 +147,6 @@ export default function VideoInfo() {
   };
 
   const handleJobComplete = (jobData) => {
-    console.log("Job completed:", jobData);
-
     // Stop monitoring
     if (pollingInterval) {
       clearInterval(pollingInterval);

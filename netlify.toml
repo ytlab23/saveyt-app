@@ -1,0 +1,36 @@
+# netlify.toml
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Proxy configuration for WebSocket connections
+[[redirects]]
+  from = "/yt-api/*"
+  to = "https://freelikes.org/yt-api/:splat"
+  status = 200
+  force = true
+
+# Handle WebSocket upgrade requests
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Allow WebSocket connections
+[[headers]]
+  for = "/yt-api/socket.io/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"

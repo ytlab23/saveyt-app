@@ -446,28 +446,6 @@ export default function VideoInfo() {
     );
   };
 
-  // Format duration helper
-  const formatDuration = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-    }
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  // Format views helper
-  const formatViews = (viewCount) => {
-    if (viewCount >= 1000000) {
-      return `${(viewCount / 1000000).toFixed(1)}M views`;
-    } else if (viewCount >= 1000) {
-      return `${(viewCount / 1000).toFixed(1)}K views`;
-    }
-    return `${viewCount} views`;
-  };
-
   if (!videoInfo) return null;
 
   return (

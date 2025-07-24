@@ -9,6 +9,67 @@ import webSocketManager from "../websocket/WebSocketManager";
 
 const BASE_URL = "https://freelikes.org";
 
+// Helper function to format file sizes
+const formatFileSize = (bytes) => {
+  if (!bytes || bytes === 0) return "Unknown";
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+};
+
+// Helper function to format numbers (views, likes)
+const formatNumber = (num) => {
+  if (!num) return "0";
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + "M";
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + "K";
+  }
+  return num.toString();
+};
+
+// Format duration helper
+const formatDuration = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
+};
+
+// Helper function to format publication date
+const formatPublishDate = (dateString) => {
+  if (!dateString) return "Unknown";
+
+  // Handle YYYYMMDD format
+  if (dateString.length === 8) {
+    const year = dateString.substring(0, 4);
+    const month = dateString.substring(4, 6);
+    const day = dateString.substring(6, 8);
+    const date = new Date(`${year}-${month}-${day}`);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  // Handle other date formats
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return dateString;
+  }
+};
+
 export default function VideoInfo() {
   const { videoInfo, currentVideoUrl, currentMode } = useVideo();
   const [showQualityMenu, setShowQualityMenu] = useState(false);

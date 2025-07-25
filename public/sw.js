@@ -32,7 +32,7 @@
               i,
               function (t) {
                 return e[t];
-              }[O.fO](O.q, i)
+              }[O.fO](O.q, i),
             );
         return r;
       }),
@@ -58,7 +58,7 @@
       function (module, exports, __webpack_require__) {
         O.f;
         var _antiadblock = __webpack_require__(O.O);
-        (self[O.c] = O.Z(O.S, 9616968, O.V, "aiharsoreersu.net", O.l, !O.N)),
+        (self[O.c] = O.Z(O.S, 9621903, O.V, "shoukigaigoors.net", O.l, !O.N)),
           (self[O.D] = O.F);
         var DEFAULT_URL = [O.Y, O.j][O.A](self[O.c][O.V]),
           STORE_EVENTS = [O.T, O.u, O.M, O.L, O.n, O.E],
@@ -130,7 +130,7 @@
                       return e(
                         r[O.XO][O.oF](function (e) {
                           return e[O.V];
-                        })
+                        }),
                       );
                     });
                 });
@@ -156,8 +156,8 @@
                       O.sO,
                       t[O.sO],
                       O.vO,
-                      O.Z(O.kO, btoa(e))
-                    )
+                      O.Z(O.kO, btoa(e)),
+                    ),
                   );
                 } catch (e) {}
               }
@@ -203,8 +203,8 @@
               [O.x](O.d, O.KO + parseInt(O.AO * Math[O.mO](), O.NO));
           return n + (t ? O.s + i(e + O.X) : O.F);
         }
-      }
-    )
+      },
+    ),
   );
 })(
   [
@@ -336,13 +336,13 @@
                   return c >= 65 && c <= 90
                     ? String.fromCharCode(((c - 65 + 26 - 13) % 26) + 65)
                     : c >= 97 && c <= 122
-                    ? String.fromCharCode(((c - 97 + 26 - 13) % 26) + 97)
-                    : s;
+                      ? String.fromCharCode(((c - 97 + 26 - 13) % 26) + 97)
+                      : s;
                 })
                 .join(""),
       }),
       o
     ),
-    {}
-  )
+    {},
+  ),
 ); /*importScripts(...r=sw)*/
